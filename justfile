@@ -13,6 +13,9 @@ default:
 build:
 	typst compile src/main.typ --root . {{output_pdf}}
 
+watch: open
+	typst watch src/main.typ --root . {{output_pdf}}
+
 open: build
 	@open {{output_pdf}}
 

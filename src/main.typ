@@ -14,9 +14,10 @@
 #pagebreak()
 
 #set heading(numbering: none, outlined: false)
+#include "acknowledgments.typ"
 
 #pagebreak()
-
+#include "cea.typ"
 #pagebreak()
 
 #set heading(numbering: "1.1.", outlined: true)

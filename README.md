@@ -5,6 +5,9 @@ This repository contains the source files for my end-of-studies internship repor
 
 This project is written in [Typst](https://typst.app/) and thus requires you have it installed on your machine (see [Typst's documentation](https://github.com/typst/typst#installation) on the installation procedure depending on your system).
 
+If you cannot install Typst on your computer, the report is also available on the Typst web app at the following link:
+[Rust and GPU programming](https://typst.app/project/r6x82Q4vi_Q7Yj1-80Z1N1)
+
 ## Building
 To build the PDF, you can either use the provided `justfile` (if you have [just](https://github.com/casey/just) installed):
 ```sh

@@ -1,0 +1,22 @@
+alias b := build
+alias c := cpp
+alias r := rust
+
+default:
+	@just --list
+
+cpp:
+	@mkdir -p target/cpp
+	g++ -std=c++17 -Wall -Wextra -Wconversion src/reduce.cpp -o target/cpp/reduce
+
+rust:
+	rustc --edition=2021 src/reduce.rs --out-dir=target/rust
+
+build: cpp rust
+
+run: build
+	target/cpp/reduce
+	target/rust/reduce
+
+clean:
+	@rm -rf target

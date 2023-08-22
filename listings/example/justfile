@@ -1,0 +1,21 @@
+alias b := build
+alias r := run
+alias c := clean
+
+FILENAME := "example"
+BINDIR := "target"
+BIN := BINDIR + "/" + FILENAME
+
+default:
+	@just --list
+
+build:
+	@echo "  BUILDING {{FILENAME}}"
+	@rustc --edition=2021 src/{{FILENAME}}.rs --out-dir={{BINDIR}}
+
+run: build
+	@echo "   RUNNING {{FILENAME}}"
+	@{{BIN}}
+
+clean:
+	@rm -rf {{BINDIR}}

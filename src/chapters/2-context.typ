@@ -57,12 +57,13 @@ The increased integration of GPUs in modern HPC systems requires the use of fast
 #h(1.8em)
 GPU programming models refer to the different approaches and methodologies used to program and utilize GPUs for general-purpose computation tasks beyond their traditional use cases in graphics rendering. This section introduces some of the programming models used in HPC based on their abstraction level. Firstly, we present low-level models that closely map to the underlying hardware architecture. Secondly, we showcase higher-level programming styles that offer more expressiveness and portability, often at the expense of a high degree of fine-tuned optimization.
 
-We start by introducing common concepts for GPU programming. We define the terms starting from the most high-level view and gradually refine them toward smaller components of GPU programming. @compute_model shows their usual organization in low-level GPU programming models. 
+We start by introducing common concepts for GPU programming. We define the terms starting from the most high-level view and gradually refine them toward smaller components of GPU programming.
 
 ==== Definitions
 
 1. *Kernel:* A kernel is a piece of device code, generally composed of one or multiple functions, that leverages data parallelism (SIMD) and is meant to execute on one or multiple GPUs. A kernel must be launched from host code, although it can be split into multiple smaller kernels that are called from the device.
-2. *Grid:* A grid is the highest-level organizational structure of a kernel's execution. It encompasses a collection of blocks, also called work groups and manages their parallel execution. Kernels are launched with parameters that define the configuration of the grid, such as the number of blocks on a given axis. Multiple grids --- i.e., kernels --- can simultaneously exist on a GPU, so to efficiently utilize the available resources.
+2. *Grid:* A grid is the highest-level organizational structure of a kernel's execution. It encompasses a collection of blocks, also called work groups and manage
+s their parallel execution. Kernels are launched with parameters that define the configuration of the grid, such as the number of blocks on a given axis. Multiple grids --- i.e., kernels --- can simultaneously exist on a GPU, so to efficiently utilize the available resources.
 3. *Block:* A block, also called thread block (CUDA), workgroup (OpenCL), or team/league (OpenMP), is a coarse-grain unit of parallelism in GPU programming. It is the main component of grids and represents a collection of threads that are working together on parts of the data operated on by a kernel. Like grids, the dimensions of blocks can be configured when launching a kernel. Threads in a block can share memory in the L1 cache (see @gpu_memory), which enables better usage of this resource by avoiding expensive, repeated reads to the GPU's global memory.
 4. *Warp:* A warp (also called wavefront in AMD terminology) is a fine-grain unit of parallelism in GPU programming, very much related to the hardware implementation of a GPU. However, it also appears at the software level in some programming models. On NVIDIA devices, threads inside a block are scheduled in groups of 32, which programmers can take advantage of in their kernels (e.g., warp-level reductions).
 5. *Thread*: A thread is the smallest unit of parallelism in GPU programming. They are grouped in blocks and concurrently perform the operations defined in a kernel. Each thread executes the same instruction as the others but operates on different data (SIMD parallelism).  
@@ -79,43 +80,55 @@ We start by introducing common concepts for GPU programming. We define the terms
 #h(1.8em)
 *Computed Unified Device Architecture (CUDA)* /*cite*/ is NVIDIA's proprietary tool for GPU programming. Using a superset of C/C++, it provides a parallel programming platform and several APIs that allow developers to write kernels that will execute on NVIDIA GPUs specifically, locking users into the vendor's ecosystem. However, CUDA is one of the most mature environments for GPU programming, offering a variety of highly optimized computing libraries and tools. Thanks to the vast existing codebase, CUDA often is the default choice for GPU programming in HPC.
 
-*Heterogeneous-Compute Interface for Portability (HIP)* /*cite*/ is the equivalent of CUDA for AMD GPUs. It is part of the RadeonOpenCompute (ROCm) software stack. Contrary to its NVIDIA equivalent, HIP is open-source, making it easier to adopt as it does not lock users into a specific vendor ecosystem. Nevertheless, HIP is a more recent environment than CUDA and as such, it is not as refined. Despite this, HIP provides basic computing libraries (BLAS, DNN, FFT, etc.) optimized for AMD GPUs, and several tools to automatically port CUDA code to HIP's syntax. It is quickly gaining traction as AMD is investing a lot of resources into its GPU programming toolkit in order to catch up with NVIDIA in this space. Its hardware advantage over NVIDIA, from an HPC standpoint, is also enabling AMD to improve adoption in the domain.
+*Heterogeneous-Compute Interface for Portability (HIP)* /*cite*/ is the equivalent of CUDA for AMD GPUs. It is part of the RadeonOpenCompute (ROCm) software stack. Contrary to its NVIDIA equivalent, HIP is open-source, making it easier to adopt as it does not lock users into a specific vendor ecosystem. Nevertheless, HIP is a more recent environment than CUDA and as such, it is not as refined. Despite this, HIP provides basic compute libraries (BLAS, DNN, FFT, etc.) optimized for AMD GPUs, and several tools to automatically port CUDA code to HIP's syntax. It is quickly gaining traction as AMD is investing a lot of resources into its GPU programming toolkit in order to catch up with NVIDIA in this space. Its hardware advantage over NVIDIA, from an HPC standpoint, is also enabling AMD to improve adoption in the domain.
 
-*OpenCL* /*cite*/ is developed as an open standard by Khronos Group for low-level, vendor-agnostic GPU programming. Unlike CUDA and HIP, OpenCL also support FPGA offloading and can even fall back to the CPU if no devices are available. It provides APIs and tools to allow programmers interacting with devices, managing memory, launching parallel executions on the GPU, and writing kernels using a superset of C's syntax. The standard defines common mechanisms that make the programming model portable, similar to what @compute_model showcases. Because of its focus on portability, OpenCL implementations can have performance limitations compared to specialized programming models such as CUDA or HIP. Most GPU vendors (NVIDIA, AMD, Intel) supply their own implementation of the OpenCL standard optimized for their hardware. Some open-source implementations of OpenCL also exist and support an even wider range of hardware accelerators.
+*OpenCL* /*cite*/ is developed as an open standard by Khronos Group for low-level, vendor-agnostic GPU programming. Unlike CUDA and HIP, OpenCL also supports FPGA offloading and can even fall back to the CPU if no devices are available. It provides APIs and tools to allow programmers to interact with devices, manage memory, launch parallel executions on the GPU, and write kernels using a superset of C's syntax. The standard defines common mechanisms that make the programming model portable, similar to what @compute_model showcases. Because of its focus on portability, OpenCL implementations can have performance limitations compared to specialized programming models such as CUDA or HIP. Most GPU vendors (NVIDIA, AMD, Intel) supply their own implementation of the OpenCL standard optimized for their hardware. Some open-source implementations of OpenCL and OpenCL compute libraries also exist.
 
 ==== High-level
 
 #h(1.8em)
-*SYCL*
+*SYCL* /*cite*/is a recent standard developed by Khronos Group that provides high-level abstractions for heterogeneous programming. Based on recent iterations of the C++ standard (C++17 and above), it aims at replacing OpenCL by simplifying the process of writing kernels and by abstracting the usual low-level compute model (see @compute_model). Kernels written in SYCL look very much like standard CPU code does. However, they can be offloaded to hardware accelerators as desired by the user, in an approach similar to what programmers are used to with OpenCL.
 
-*OpenMP*
+*Open Multi-Processing (OpenMP)* /*cite*/is an API specification for shared-memory parallel programming that also supports offloading to hardware accelerators. It is based on compiler directives for C/C++ and Fortran programming languages. Similarly to SYCL, standard CPU code can be automatically offloaded to the GPU by annotating the relevant section using OpenMP `pragma omp target` clauses. OpenMP is well-known in the field of HPC as it is the primary tool for fine-grain, shared-memory parallelism on CPUs. 
 
-*Kokkos*
+*Kokkos* /*cite*/is a modern C++ performance portability programming ecosystem that provides mechanisms for parallel execution on hardware accelerators. Unlike other programming models, Kokkos implements GPU offloading using a variety of backends (CUDA, HIP, SYCL, OpenMP, etc.). Users write their kernels in standard C++ and can choose their prefered backend for code generation. Kokkos also provides useful memory abstractions, tools and compute libraries target for HPC use cases.   
 
 === Performance benefits and HPC use cases
 
-Historically, GPUs have primarily been used for graphics-intensive tasks like 3D modeling, rendering, or gaming. However, their highly parallelized design also makes them appealing for HPC workloads which often induce a large number of computations that can be performed concurrently.
+Historically, GPUs have primarily been used for graphics-intensive tasks like 3D modeling, rendering, or gaming. However, their highly parallelized design also makes them appealing for HPC workloads which often induce a large number of computations that can be performed concurrently. Applications that are primarily compute-bound can benefit from significant performance improvements when executed on GPUs. Modern HPC systems have already taken advantage of GPUs by tightly incorporating them into their design. Around 98% of the peak performance of supercomputers such as Frontier (\#1 machine on the June 2023 TOP500 ranking/*cite*/) comes from GPUs, making it crucial to use them efficiently. 
+// Talk about FP precision? AI influence on GPU designs conflicting with HPC interests?
 
 == The Rust programming language
 
-=== Language features
+#h(1.8em)
+This section introduces the Rust programming language, its notable features, its possible usage in HPC software, and why it is an interesting language for the CEA.
 
-// Display inline code in a small box
-// that retains the correct baseline.
-#show raw.where(block: false): box.with(
-  fill: luma(240),
-  inset: (x: 3pt, y: 0pt),
-  outset: (y: 3pt),
-  radius: 2pt,
-)
+Rust is a general-purpose, multi-paradigm, imperative, strong and statically typed language designed for performance, safety and concurrency. Its development started in 2009 at Mozilla, and its first stable release was announced in 2015. As such, it is a rather recent language that aims at becoming the new gold standard for systems programming. Its syntax is based on C and C++ but with a modern twist and heavily influenced by functional languages.
 
-// Display block code in a larger block
-// with more padding.
 #show raw.where(block: true): block.with(
   fill: luma(240),
   inset: 10pt,
   radius: 4pt,
+  width: 100%,
 )
+
+#figure(caption: "Simple vector sum in Rust")[
+```rs
+fn main() {
+    let x = vec![0.0, 1.0, 2.0, 3.0, 5.0];
+    let sum: f64 = x.iter().sum();
+    println!("x  = {x:?}");
+    println!("Σx = {sum}");
+}
+```
+```
+x  = [0.0, 1.0, 2.0, 3.0, 5.0]
+Σx = 11
+```
+]
+
+=== Language features
+
 ```rs
 const NPARTICLES: usize = 100;
 let particles_positions = vec![Particle::default(); NPARTICLES];

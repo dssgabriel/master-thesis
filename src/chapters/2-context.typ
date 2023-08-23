@@ -135,8 +135,8 @@ In @ownership, declaring `s2` by assigning `s1` to it takes ownership of the val
 
 In order to share values between multiple variables, the language also provides references that implement a borrowing mechanism. There are two kinds of references in Rust:
 - *Immutable (shared) references* are read-only. Multiple immutable references to the same value can exist simultaneously.
-- *Mutable* references allow modifying a value that has been borrowed. However, a mutable reference is unique. There cannot be other references (mutable or shared) to a value that has been mutably borrowed while the mutable reference remains in scope. 
-The Rust "borrow-checker" enforces these rules at compile-time. It can also check that any given reference remains valid while in use (i.e., the object it points to is still in scope). This statically guarantees that there are no dangling pointers/references in the code. @borrowing demonstrates these rules annotated with comments of the compiler errors, where relevant. 
+- *Mutable references* allow modifying a value that has been borrowed. However, a mutable reference is unique. There cannot be other references (mutable or shared) to a value that has been mutably borrowed while the reference remains in scope. 
+The Rust "borrow-checker" enforces these rules at compile-time. It can also check that any given reference remains valid while in use (i.e., the object it points to is still in scope). This statically guarantees that there are no dangling pointers/references in the code. @borrowing demonstrates these rules annotated with comments summing up the compiler errors, where relevant. 
 
 #figure(caption: "Rust's borrowing in action")[
   ```rs
@@ -151,18 +151,16 @@ println!("{s2}");     // ERROR! `s2` held a reference that is not valid anymore
                       // because the owner `s1` went out of scope
   ```
   ```rs
-fn main() {
-    let mut s1 = String::from("Hello, "); // `s1` needs to be declared as mutable so we can mutably borrow it
-    {
-        let s2 = &mut s1;      // Mutably borrowing the value held by `s1`
-        let s3 = &s1;          // ERROR! cannot borrow because `s2` is a mutable
-                               // reference in scope, later used to modify `s1`
-        s2.push_str("world!"); // OK! Modifying `s1` through `s2`
-        // `s2` falls out of scope, and the mutable reference is dropped
-    }
-    let s3 = &s1;              // OK! The are no mutable references to `s1`
-    println!("{s3}");          // Prints "Hello, world!"
-}
+let mut s1 = String::from("Hello, "); // `s1` needs to be declared as mutable
+                                      // so we can mutably borrow it
+{
+    let s2 = &mut s1;      // Mutably borrowing the value held by `s1`
+    let s3 = &s1;          // ERROR! cannot borrow because `s2` is a mutable
+                           // reference in scope, later used to modify `s1`
+    s2.push_str("world!"); // OK! Modifying `s1` through `s2`
+} // `s2` falls out of scope, and the mutable reference is dropped
+let s3 = &s1;              // OK! The are no mutable references to `s1`
+println!("{s3}");          // Prints "Hello, world!"
 
   ```
 ]<borrowing>
@@ -218,9 +216,9 @@ We obtain different results for each run and never get the expected `1,000,000` 
   caption: "Illustration of a race condition"
 )<race_cond>
 
-@race_cond shows how two threads A and B can cause a race condition while trying to concurrently update the value of `result`. Both threads load the same value and increment it before storing it again. Thread B overwrites the value stored by thread A without taking into account thread A's changes, therefore losing information and producing the wrong sum.
+@race_cond shows how two threads, A and B, can cause a race condition while trying to update the value of `result concurrently`. Both threads load the same value and increment it before storing it again. Thread B overwrites the value stored by thread A without taking into account thread A's changes, therefore losing information and producing the wrong sum.
 
-In contrast, Rust's ownership rules allow the compiler to notice such race conditions, making it reject the following, equivalent code:
+In contrast, Rust's ownership rules allow the compiler to notice such race conditions, making it reject the following equivalent code:
 
 #figure(caption: "Multi-threaded vector sum in standard Rust")[
   ```rs
@@ -228,7 +226,7 @@ const NELEMENTS: usize = 1_000_000;
 const NTHREADS: usize = 8;
 const QOT: usize = NELEMENTS / NTHREADS;
 const REM: usize = NELEMENTS % NTHREADS;
-let array = vec![1; NELEMENTS];
+let vector = vec![1; NELEMENTS];
 let mut threads = Vec::with_capacity(NTHREADS);
 
 let mut result = 0;
@@ -241,7 +239,7 @@ for t in 0..NTHREADS {
     };
     threads.push(std::thread::spawn(|| {
         for i in start..end {
-            result += array[i]; // thread `t` mutably borrows `result`
+            result += vector[i]; // thread `t` mutably borrows `result`
         }
     }));
 }
@@ -253,15 +251,42 @@ println!("RESULT: {result}");
   ```
 ]<rs_thread_safety>
 
-Indeed, although Rust automatically infers that it must mutably borrow `result` in the thread's lambda (called "closures" in Rust), it cannot guarantee that the thread will finish executing before `result` goes out of scope. Furthermore, when a thread `t` mutably borrows `result`, it prevents the other threads from borrowing it, resulting in a compiler error.   
+Indeed in @rs_thread_safety, although Rust automatically infers that it must mutably borrow `result` in the thread's lambda (called "closures" in Rust), it cannot guarantee that the thread will finish executing before `result` goes out of scope. Furthermore, when a thread `t` mutably borrows `result`, it prevents the other threads from borrowing it, resulting in a compiler error. The full error message is available in @error_race_cond in the @appendix.
+#linebreak()
+In some cases, Rust can even propose the relevant changes to make the code valid. E.g., @rs_thread_safety can be fixed by either:
+- Making the `result` variable atomic, in order to guarantee shared-memory communication of the updated value between threads;
+- Wrapping the `result` variable with a lock (e.g., a mutex) to ensure that increments of the value are protected atomically.
+
+Rust's ownership and borrowing rules make it a great fit for parallel programming, as the compiler can assert that the code is semantically correct and will produce the expected behavior. Being a compiled language, it is able to match, and even sometimes surpass the performance of its direct competitors: C and C++.
+
+#h(-1.8em)
+Hereafter we exhaustively list other useful features that the language includes but that are not worth exploring in detail in the available space of this report:
+- Type inference;
+- Smart pointers and RAII mechanisms for automatic resource allocation and deallocation;
+- Powerful enum types that can both encode meaning and hold values, paired with pattern-matching expressions to concisely handle variants;
+- Optional datatypes that enable compact error handling for both recoverable and unrecoverable errors;
+- A generic typing system, and _traits_ that provide ways to express shared behaviors between objects;
+- A robust documenting, testing, and benchmarking framework integrated into the language;
+- A broad standard library that provides an extensive set of containers, algorithms, OS and I/O functionalities, asynchronous and networking primitives, concurrent data structures and message passing features, etc.
+
+The language also comes with an extensive set of tools:
+- A toolchain manager, `rustup`;
+- A package manager and build system, `cargo`;
+- A registry for sharing open-source libraries, `crates.io`;
+- An extensive and very complete language documentation, `docs.rs`;
+- First-class programming tools for improved development efficiency: a language server, `rust-analyzer`, a linter `clippy`, a code formatter `rustfmt`, etc.
 
 === HPC use cases
 
-=== Interest in GPU programming at the CEA
+The accent that Rust puts on performance, safety and concurrency makes the language a fitting candidate for becoming a first-tier choice for HPC applications. Its focus on thread safety, in particular, empowers programmers to write fast, robust, and safe code that will be easily maintainable and improvable over its lifetime. Rust avoids many of the pitfalls of C++, especially in terms of language complexity, and its modern features and syntax make it a lot easier to work with than Fortran. Its adoption into many of the top companies that work in fields related to HPC (Amazon, Google, Microsoft Azure, etc.), and its acceptance as the second language of the Linux kernel helped it gain a lot of traction in low-level, high-performance programming domains. Not only is it well suited to writing scientific software that relies on efficient parallelism, Rust also is a formidable language for writing HPC tools, such as profilers, debuggers, or even low-level libraries that power abstractions in higher-level languages (e.g., Python, Julia, etc.).
 
 == Goals
 
-- Establish the state of the art
-- Explore the possibilities and limitations compared to vanilla Rust
-- Performance comparison
-- Proof of concept on CEA applications
+#h(1.8em)
+The aim of this internship is to establish an exhaustive state of the art for the capabilities of Rust in writing software for GPU computing. The goal is to explore what the language is currently able to natively support, and what are the existing frameworks or libraries for GPGPU programming.
+
+There are several crates, e.g., `rayon`, that enable trivial parallelization of code sections for CPU use cases, similar to OpenMP's ease of use in C, C++ and Fortran. This library provides parallel implementations of Rust's standard iterators that fully leverage the language thread-safety features, thus guaranteeing the code's correctness, while also unlocking the processor's maximum multi-core performance. It also implements automatic work-stealing techniques that help keep the CPU busy, even when the application's load balancing is not perfect. We want to investigate if something similar exists for GPU computing, and, if not, to determine what the limitations are, and if it would be possible to implement.
+
+In a secondary stage, we want to assess Rust's ability to keep up with the performance of C and C++ GPGPU programming. This comparison would be primarily based on common compute kernels and should aim at evaluating what are the best options for GPU code generation in Rust.
+
+Finally, we would like to research the limits of Rust for GPU computing by porting parts of real-world CEA applications. This work involves evaluating both the effort necessary for such ports, as well as the performance improvements that we can expect for industrial-grade software. 

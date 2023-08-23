@@ -1,0 +1,31 @@
+alias b := build
+alias r := run
+alias c := clean
+
+FILENAME := "thread_safety"
+BINDIR := "target"
+CPP_BINDIR := BINDIR + "/cpp"
+RUST_BINDIR := BINDIR + "/rust"
+CPP_BIN := CPP_BINDIR + "/" + FILENAME
+RUST_BIN := RUST_BINDIR + "/" + FILENAME
+
+default:
+	@just --list
+
+cpp:
+	@echo "  BUILDING src/{{FILENAME}}.cpp"
+	@mkdir -p {{CPP_BINDIR}}
+	g++ -std=c++17 -Wall -Wextra src/{{FILENAME}}.cpp -o {{CPP_BIN}}
+
+rs:
+	@echo "  BUILDING src/{{FILENAME}}.rs"
+	rustc --edition=2021 src/{{FILENAME}}.rs --out-dir={{RUST_BINDIR}}
+
+build: cpp rs
+
+run: cpp
+	@echo "   RUNNING {{CPP_BIN}} 10 times"
+	@for i in $(seq 1 10); do {{CPP_BIN}}; done
+
+clean:
+	@rm -rf {{BINDIR}}

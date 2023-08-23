@@ -2,7 +2,7 @@ alias b := build
 alias r := run
 alias c := clean
 
-FILENAME := "example"
+FILENAME := "ownership"
 BINDIR := "target"
 BIN := BINDIR + "/" + FILENAME
 

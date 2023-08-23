@@ -5,7 +5,7 @@
     it
 }
 
-= Appendix
+= Appendix <appendix>
 
 #figure(caption: "Rust's compiler error message for a race condition bug in")[
   ```

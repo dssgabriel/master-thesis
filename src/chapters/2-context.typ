@@ -1,3 +1,17 @@
+#show raw.where(block: true): it => {
+    set text(font: "IBM Plex Mono")
+    set align(left)
+    set block(fill: luma(240), inset: 10pt, radius: 4pt, width: 100%)
+    it
+}
+#show raw.where(block: false): box.with(
+  fill: luma(240),
+  inset: (x: 3pt, y: 0pt),
+  outset: (y: 3pt),
+  radius: 2pt
+)
+#show raw.where(block: false): text.with(font: "IBM Plex Mono")
+
 = Context of the internship
 
 == Hardware accelerators
@@ -13,7 +27,7 @@ While CPUs are optimized to compute serial tasks as quickly as possible, GPUs ar
 In this section, we will use the Ampere architecture as an example, as it is described in NVIDIA's whitepaper, and also provide the terminology for equivalent hardware components on AMD GPUs.
 
 #figure(
-  image("../../images/2-context/ga100-full.png", width: 100%),
+  image("../../figures/2-context/ga100-full.png", width: 100%),
   caption: [Block diagram of the full NVIDIA GA100 GPU implementation],
 ) <ga100-full>
 
@@ -28,7 +42,7 @@ On the full implementation of NVIDIA's GA100 GPU, there are 128 SMs and 64 singl
 (32-bit) floating-point CUDA cores per SM, enabling the parallel execution of up to 8192 threads.
 
 #figure(
-  image("../../images/2-context/a100-sm.png", width: 40%),
+  image("../../figures/2-context/a100-sm.png", width: 40%),
   caption: [Streaming Multiprocessor (SM) of NVIDIA A100 GPU]
 ) <a100-sm>
 
@@ -43,7 +57,7 @@ NVIDIA GPUs expose multiple levels of memory, each with different capacities, la
 @gpu_memory showcases how these kinds of memory are typically organized on an NVIDIA chip.
 
 #figure(
-  image("../../images/2-context/gpu_memory.svg", width: 96%),
+  image("../../figures/2-context/gpu_memory.svg", width: 96%),
   caption: [Generic memory hierarchy of NVIDIA GPUs]
 ) <gpu_memory>
 
@@ -70,14 +84,14 @@ We start by introducing common concepts for GPU programming. We define the terms
 @compute_model summarizes these structures as exposed to programmers in a CUDA-style programming model, which we introduce in the next section.
 
 #figure(
-  image("../../images/2-context/compute_model.svg", width: 100%),
+  image("../../figures/2-context/compute_model.svg", width: 100%),
   caption: [General compute model for CUDA-style GPU programming]
 ) <compute_model>
 
 ==== Low-level
 
 #h(1.8em)
-*Computed Unified Device Architecture (CUDA)* /*cite*/ is NVIDIA's proprietary tool for GPU programming. Using a superset of C/C++, it provides a parallel programming platform and several APIs that allow developers to write kernels that will execute on NVIDIA GPUs specifically, locking users into the vendor's ecosystem. However, CUDA is one of the most mature environments for GPU programming, offering a variety of highly optimized computing libraries and tools. Thanks to the vast existing codebase, CUDA often is the default choice for GPU programming in HPC.
+*Computed Unified Device Architecture (CUDA)* /*cite*/ is NVIDIA's proprietary tool for GPU programming. Using a superset of C/C++, it provides a parallel programming platform and several APIs that allow developers to write kernels that will execute on NVIDIA GPUs specifically, locking users into the vendor's ecosystem. However, CUDA is one of the most mature environments for GPU programming, offering a variety of highly optimized computing libraries and tools. Thanks to the vast existing codebase, CUDA is often the default choice for GPU programming in HPC.
 
 *Heterogeneous-Compute Interface for Portability (HIP)* /*cite*/ is the equivalent of CUDA for AMD GPUs. It is part of the RadeonOpenCompute (ROCm) software stack. Contrary to its NVIDIA equivalent, HIP is open-source, making it easier to adopt as it does not lock users into a specific vendor ecosystem. Nevertheless, HIP is a more recent environment than CUDA and as such, it is not as refined. Despite this, HIP provides basic compute libraries (BLAS, DNN, FFT, etc.) optimized for AMD GPUs, and several tools to automatically port CUDA code to HIP's syntax. It is quickly gaining traction as AMD is investing a lot of resources into its GPU programming toolkit in order to catch up with NVIDIA in this space. Its hardware advantage over NVIDIA, from an HPC standpoint, is also enabling AMD to improve adoption in the domain.
 
@@ -97,17 +111,6 @@ We start by introducing common concepts for GPU programming. We define the terms
 Historically, GPUs have primarily been used for graphics-intensive tasks like 3D modeling, rendering, or gaming. However, their highly parallelized design also makes them appealing for HPC workloads which often induce a large number of computations that can be performed concurrently. Applications that are primarily compute-bound can benefit from significant performance improvements when executed on GPUs. Modern HPC systems have already taken advantage of GPUs by tightly incorporating them into their design. Around 98% of the peak performance of modern supercomputers such as Frontier (\#1 machine on the June 2023 TOP500 ranking/*cite*/) comes from GPUs, making it crucial to use them efficiently. 
 // Talk about FP precision? AI influence on GPU designs conflicting with HPC interests?
 
-#show raw.where(block: true): it => {
-    set text(font: "IBM Plex Mono")
-    set align(left)
-    set block(fill: luma(240), inset: 10pt, radius: 4pt, width: 100%)
-    it
-}
-#show raw.where(block: false): it => {
-    set text(font: "IBM Plex Mono")
-    set box(fill: luma(240), inset: (x: 3pt, y: 0pt), outset: (y: 3pt), radius: 2pt)
-    it
-}
 == The Rust programming language
 
 #h(1.8em)
@@ -117,12 +120,12 @@ This section introduces the Rust programming language, its notable features, its
 
 Rust is a compiled, general-purpose, multi-paradigm, imperative, strong, and statically typed language designed for performance, safety and concurrency. Its development started in 2009 at Mozilla, and its first stable release was announced in 2015. As such, it is a rather recent language that aims at becoming the new gold standard for systems programming. Its syntax is based on C and C++ but with a modern twist and heavily influenced by functional languages.
 
-Rust's main features are the ownership principle and the "borrow-checker". 
-Ownership rules state the following:
+Rust's primary feature that distinguishes it from other compiled languages is its principle of ownership and _borrow-checker_. 
+Ownership rules state the following/*cite*/:
 1. Each value has an owner.
 2. There can only be _one_ owner at a time.
 3. When the owner goes out of scope, the value's associated memory is _automatically_ dropped.
-Contrarily to C++, there are no implicit deep copies in Rust.
+Contrarily to C++, there are no implicit deep copies of heap-allocated objects in Rust. Furthermore, variables are constant by default and need to be explicitly declared as mutable, using the `mut` keyword.
 
 #figure(caption: "Rust's ownership in action")[
   ```rs
@@ -144,7 +147,7 @@ let s2;
 {
     let s1 = String::from("bar");
     s2 = &s1;         // Borrowing the value held by `s1`
-    println!("{s1}"); // OK! `s2` only has borrowed `s1`, thus it is still valid
+    println!("{s1}"); // OK! `s1` has only been borrowed, thus it is still valid
     println!("{s2}"); // OK! `s2` holds a reference to "bar" but does not own it
 }
 println!("{s2}");     // ERROR! `s2` held a reference that is not valid anymore
@@ -212,11 +215,11 @@ RESULT: 590743
 We obtain different results for each run and never get the expected `1,000,000` result. This is because @cpp_thread_safety contains a race condition that happens when we try to increment the `result` variable.
 
 #figure(
-  image("../../images/2-context/race_cond.svg", width: 60%),
+  image("../../figures/2-context/race_cond.svg", width: 60%),
   caption: "Illustration of a race condition"
 )<race_cond>
 
-@race_cond shows how two threads, A and B, can cause a race condition while trying to update the value of `result concurrently`. Both threads load the same value and increment it before storing it again. Thread B overwrites the value stored by thread A without taking into account thread A's changes, therefore losing information and producing the wrong sum.
+@race_cond shows how two threads, A and B, can cause a race condition while trying to update the value of `result` concurrently. Both threads load the same value and increment it before storing it again. Thread B overwrites the value stored by thread A without taking into account thread A's changes, therefore losing information and producing the wrong sum.
 
 In contrast, Rust's ownership rules allow the compiler to notice such race conditions, making it reject the following equivalent code:
 
@@ -269,24 +272,24 @@ Hereafter we exhaustively list other useful features that the language includes 
 - A robust documenting, testing, and benchmarking framework integrated into the language;
 - A broad standard library that provides an extensive set of containers, algorithms, OS and I/O functionalities, asynchronous and networking primitives, concurrent data structures and message passing features, etc.
 
-The language also comes with an extensive set of tools:
-- A toolchain manager, `rustup`;
+Rust also comes with a vast set of tools to aid software development:
+- A toolchain manager that handles various hardware targets, `rustup`;
 - A package manager and build system, `cargo`;
 - A registry for sharing open-source libraries, `crates.io`;
-- An extensive and very complete language documentation, `docs.rs`;
+- A comprehensive language and standard library documentation, `docs.rs`;
 - First-class programming tools for improved development efficiency: a language server, `rust-analyzer`, a linter `clippy`, a code formatter `rustfmt`, etc.
 
 === HPC use cases
 
-The accent that Rust puts on performance, safety and concurrency makes the language a fitting candidate for becoming a first-tier choice for HPC applications. Its focus on thread safety, in particular, empowers programmers to write fast, robust, and safe code that will be easily maintainable and improvable over its lifetime. Rust avoids many of the pitfalls of C++, especially in terms of language complexity, and its modern features and syntax make it a lot easier to work with than Fortran. Its adoption into many of the top companies that work in fields related to HPC (Amazon, Google, Microsoft Azure, etc.), and its acceptance as the second language of the Linux kernel helped it gain a lot of traction in low-level, high-performance programming domains. Not only is it well suited to writing scientific software that relies on efficient parallelism, Rust also is a formidable language for writing HPC tools, such as profilers, debuggers, or even low-level libraries that power abstractions in higher-level languages (e.g., Python, Julia, etc.).
+The accent that Rust puts on performance, safety and concurrency makes the language a fitting candidate for becoming a first-tier choice for HPC applications. Its focus on thread safety, in particular, empowers programmers to write fast, robust, and safe code that will be easily maintainable and improvable over its lifetime. Rust avoids many of the pitfalls of C++, especially in terms of language complexity, and its modern features and syntax make it a lot easier to work with than Fortran. Its adoption into many of the top companies that work in fields related to HPC (Amazon, Google, Microsoft Azure, etc.), and its acceptance as the second language of the Linux kernel helped it gain a lot of traction in low-level, high-performance programming domains. Not only is it well suited to writing scientific software that relies on efficient parallelism, Rust is also a formidable language for writing HPC tools, such as profilers, debuggers, or even low-level libraries that power abstractions in higher-level languages (e.g., Python, Julia, etc.).
 
 == Goals
 
 #h(1.8em)
-The aim of this internship is to establish an exhaustive state of the art for the capabilities of Rust in writing software for GPU computing. The goal is to explore what the language is currently able to natively support, and what are the existing frameworks or libraries for GPGPU programming.
+The aim of this internship is to establish an exhaustive state of the art for the capabilities of Rust in GPU programming. The goal is to explore what the language is currently able to natively support, and what are the existing frameworks or libraries for writing GPGPU software.
 
-There are several crates, e.g., `rayon`, that enable trivial parallelization of code sections for CPU use cases, similar to OpenMP's ease of use in C, C++ and Fortran. This library provides parallel implementations of Rust's standard iterators that fully leverage the language thread-safety features, thus guaranteeing the code's correctness, while also unlocking the processor's maximum multi-core performance. It also implements automatic work-stealing techniques that help keep the CPU busy, even when the application's load balancing is not perfect. We want to investigate if something similar exists for GPU computing, and, if not, to determine what the limitations are, and if it would be possible to implement.
+There are several crates, e.g., `rayon`, that enable trivial parallelization of code sections for CPU use cases, similar to OpenMP's ease of use in C, C++ and Fortran. This library provides parallel implementations of Rust's standard iterators that fully leverage the language thread-safety features. Code is guaranteed to be correct at compile time, and unlocks the processor's maximum multi-core performance. `rayon` also implements automatic work-stealing techniques that keep the CPU busy, even when the application's load balancing is not optimal. We want to investigate if something similar exists for GPU computing, and, if not, to determine what the limitations would be if we tried to.
 
 In a secondary stage, we want to assess Rust's ability to keep up with the performance of C and C++ GPGPU programming. This comparison would be primarily based on common compute kernels and should aim at evaluating what are the best options for GPU code generation in Rust.
 
-Finally, we would like to research the limits of Rust for GPU computing by porting parts of real-world CEA applications. This work involves evaluating both the effort necessary for such ports, as well as the performance improvements that we can expect for industrial-grade software. 
+Finally, we would like to research the limits of Rust for GPU computing by porting parts of real-world CEA applications. This work involves evaluating both the effort necessary for such ports, as well as the performance improvements that we can expect for industrial-grade software.

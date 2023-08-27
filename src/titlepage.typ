@@ -1,10 +1,10 @@
 #grid(
   columns: (1fr, 1fr),
   align(top + center)[
-    #image("../images/ups_logo.svg", width: 45%)
+    #image("../figures/ups_logo.svg", width: 45%)
   ],
   align(center)[
-    #image("../images/cea_logo.svg", width: 40%)
+    #image("../figures/cea_logo.svg", width: 40%)
   ]
 )
 
@@ -18,7 +18,7 @@
   center,
   text(18pt)[
     Master 2 High Performance Computing, Simulation \
-    End-of-studies internship \
+    End-of-studies internship report\
   ]
 )
 
@@ -55,5 +55,5 @@ on NVIDIA GPUs.
 
 #v(1em)
 
-#align(center, text(18pt)[CEA/DAM DIF, Arpajon, France])
+#align(center, text(18pt)[CEA, DAM, DIF, F-91297, Arpajon, France])
 #align(center, text(16pt)[#datetime.today().display("[month repr:long] [day], [year]")])

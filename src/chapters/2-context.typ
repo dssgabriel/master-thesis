@@ -88,7 +88,7 @@ We start by introducing common concepts for GPU programming. We define the terms
   caption: [General compute model for CUDA-style GPU programming]
 ) <compute_model>
 
-==== Low-level
+==== Low-level <low_lvl_gpu_prog>
 
 #h(1.8em)
 *Computed Unified Device Architecture (CUDA)* /*cite*/ is NVIDIA's proprietary tool for GPU programming. Using a superset of C/C++, it provides a parallel programming platform and several APIs that allow developers to write kernels that will execute on NVIDIA GPUs specifically, locking users into the vendor's ecosystem. However, CUDA is one of the most mature environments for GPU programming, offering a variety of highly optimized computing libraries and tools. Thanks to the vast existing codebase, CUDA is often the default choice for GPU programming in HPC.

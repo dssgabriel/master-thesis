@@ -7,4 +7,4 @@ To meet these new criteria and take advantage of the performance improvements of
 
 The Rust programming language is a newcomer in the field of high-performance compiled languages, with its first stable release in 2015. It aims at solving most of the memory and type safety issues that exist in C and C++ while maintaining equivalent performance. It also puts a significant accent on correctness in concurrency contexts by eliminating an entire class of data race bugs thanks to its borrow checker. Rust thus provides robust safety guarantees without performance penalties, packed in a modern syntax with many functional features that align well with the current trends in software engineering.
 
-// Introduce the interest in Rust for GPU computing at the CEA?
+This internship aims to evaluate the viability of Rust as a GPGPU programming language in the context of scientific computing and HPC. In particular, the goal is to determine if we can use some properties of the language to guarantee the robustness, memory and thread safety of GPU codes developed at the CEA thanks to the Rust compiler.

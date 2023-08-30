@@ -104,12 +104,13 @@ We start by introducing common concepts for GPU programming. We define the terms
 
 *Open Multi-Processing (OpenMP)* /*cite*/is an API specification for shared-memory parallel programming that also supports offloading to hardware accelerators. It is based on compiler directives for C/C++ and Fortran programming languages. Similarly to SYCL, standard CPU code can be automatically offloaded to the GPU by annotating the relevant section using OpenMP `pragma omp target` clauses. OpenMP is well-known in the field of HPC as it is the primary tool for fine-grain, shared-memory parallelism on CPUs. 
 
-*Kokkos* /*cite*/is a modern C++ performance portability programming ecosystem that provides mechanisms for parallel execution on hardware accelerators. Unlike other programming models, Kokkos implements GPU offloading using a variety of backends (CUDA, HIP, SYCL, OpenMP, etc.). Users write their kernels in standard C++ and can choose their preferred backend for code generation. Kokkos also provides useful memory abstractions, tools, and compute libraries targeted for HPC use cases.   
+*Kokkos* /*cite*/is a modern C++ performance portability programming ecosystem that provides mechanisms for parallel execution on hardware accelerators. Unlike other programming models, Kokkos implements GPU offloading using a variety of backends (CUDA, HIP, SYCL, OpenMP, etc.). Users write their kernels in standard C++ and can choose their preferred backend for code generation. Kokkos also provides useful memory abstractions, tools, and compute libraries targeted for HPC use cases.
 
 === Performance benefits and HPC use cases
 
-Historically, GPUs have primarily been used for graphics-intensive tasks like 3D modeling, rendering, or gaming. However, their highly parallelized design also makes them appealing for HPC workloads which often induce a large number of computations that can be performed concurrently. Applications that are primarily compute-bound can benefit from significant performance improvements when executed on GPUs. Modern HPC systems have already taken advantage of GPUs by tightly incorporating them into their design. Around 98% of the peak performance of modern supercomputers such as Frontier (\#1 machine on the June 2023 TOP500 ranking/*cite*/) comes from GPUs, making it crucial to use them efficiently. 
-// Talk about FP precision? AI influence on GPU designs conflicting with HPC interests?
+Historically, GPUs have primarily been used for graphics-intensive tasks like 3D modeling, rendering, or gaming. However, their highly parallelized design also makes them appealing for HPC workloads, which often induce a large number of computations that can be performed concurrently. Applications that are primarily compute-bound can benefit from significant performance improvements when executed on GPUs. Modern HPC systems have already taken advantage of GPUs by tightly incorporating them into their design. Around 98% of the peak performance of modern supercomputers such as Frontier (\#1 machine on the June 2023 TOP500 ranking/*cite*/) comes from GPUs, making it crucial to use them efficiently. Moreover, 9 machines in the top 10 are equipped with GPUs, further demonstrating their importance.
+#linebreak()
+The convergence between HPC and AI is a contributing factor to the hardware-accelerator trend, especially in exascale class systems. However, it is important to note that while both fields can benefit from GPUs, their uses of the hardware are entirely different. Indeed, most AI workloads can profit from reduced floating-point (FP) precision. Notably, they can leverage specialized tensor cores found in modern GPUs to further enhance the performance of AI workloads, which predominantly depend on dense matrix operations. This is not the case for HPC, which, most of the time, requires the use of double-precision floating-point arithmetic. As AI continues to gain significant momentum and attract a growing user base, it may impact the design of the next generation of GPUs. This influence could lead to a shift towards prioritizing more tensor cores and reduced floating-point precision, potentially at the expense of HPC's interests.
 
 == The Rust programming language
 
@@ -215,7 +216,7 @@ RESULT: 590743
 We obtain different results for each run and never get the expected `1,000,000` result. This is because @cpp_thread_safety contains a race condition that happens when we try to increment the `result` variable.
 
 #figure(
-  image("../../figures/2-context/race_cond.svg", width: 60%),
+  image("../../figures/2-context/race_cond.svg", width: 96%),
   caption: "Illustration of a race condition"
 )<race_cond>
 
@@ -288,8 +289,12 @@ The accent that Rust puts on performance, safety and concurrency makes the langu
 #h(1.8em)
 The aim of this internship is to establish an exhaustive state of the art for the capabilities of Rust in GPU programming. The goal is to explore what the language is currently able to natively support, and what are the existing frameworks or libraries for writing GPGPU software.
 
+As the CEA can be involved in the development of critical code for simulation purposes, Rust's focus on high performance and its guarantees in type, memory and thread safety are compelling assets for writing fast, efficient, and robust code. As a primary actor in the fields of research and industry, the CEA could benefit from the use of Rust in hardware-accelerated application for scientific computing purposes.  
+
 There are several crates, e.g., `rayon`, that enable trivial parallelization of code sections for CPU use cases, similar to OpenMP's ease of use in C, C++ and Fortran. This library provides parallel implementations of Rust's standard iterators that fully leverage the language thread-safety features. Code is guaranteed to be correct at compile time, and unlocks the processor's maximum multi-core performance. `rayon` also implements automatic work-stealing techniques that keep the CPU busy, even when the application's load balancing is not optimal. We want to investigate if something similar exists for GPU computing, and, if not, to determine what the limitations would be if we tried to.
 
 In a secondary stage, we want to assess Rust's ability to keep up with the performance of C and C++ GPGPU programming. This comparison would be primarily based on common compute kernels and should aim at evaluating what are the best options for GPU code generation in Rust.
 
 Finally, we would like to research the limits of Rust for GPU computing by porting parts of real-world CEA applications. This work involves evaluating both the effort necessary for such ports, as well as the performance improvements that we can expect for industrial-grade software.
+
+This work's end purpose is to determine if it is possible to leverage Rust's properties for writing efficient code whose concurrent correctness is asserted by the compiler.

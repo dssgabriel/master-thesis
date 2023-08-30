@@ -9,10 +9,43 @@
 
 == Glossary
 
-/ ASIC: Application-Specific Integrated Circuit.
-/ CUDA: Compute Unified Device Architecture.
-/ FPGA: Field-Programmable Gate Array.
-/ GPU: Graphics Programming Unit.
+Items in the glossary are ordered alphabetically.
+
+#set par(first-line-indent: 0em)
+#set terms(separator: ": ", tight: true, spacing: auto)
+/ ABI: Application Binary Interface
+/ AI: Artificial Intelligence
+/ API: Application Programming Interface
+/ ASIC: Application-Specific Integrated Circuit
+/ AXPY: $alpha x + y$, vector addition
+/ BLAS: Basic Linear Algebra Software
+/ CU: Compute Unit
+/ CUDA: Compute Unified Device Architecture
+/ (G)DDR: (Graphics) Double Data Rate (memory)
+/ DNN: Deep Neural Network
+/ FMA: Fused Multiply-Add
+/ FP: Floating Point
+/ FPGA: Field Programmable Gate Array
+/ FFT: Fast Fourier Transform
+/ GEMM: General Matrix Multiplication
+/ (GP)GPU: (General Purpose) Graphics Programming Unit
+/ HBM: High-Bandwidth Memory
+/ HIP: Heterogeneous-Compute Interface for Portability
+/ HPC: High Performance Computing
+/ IR: Intermediate Representation
+/ ISA: Instruction Set Architecture
+/ JIT: Just-In-Time (compilation)
+/ MMA: Matrix Multiply-Accumulate
+/ PCIe: Peripheral Component Interconnect Express
+/ PTX: Parallel-Thread eXecution
+/ RAII: Resource Acquisition Is Initialization
+/ (V)RAM: (Video) Random Access Memory
+/ RDMA: Remote Direct Memory Access
+/ ROCm: Radeon Open Compute
+/ SASS: Streaming ASSembler
+/ SIMD: Single Instruction, Multiple Data
+/ SIMT: Single Instruction, Multiple Thread
+/ SM: Streaming Multiprocessor
 
 == Listings 
 

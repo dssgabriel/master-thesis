@@ -36,11 +36,15 @@ Items in the glossary are ordered alphabetically.
 / ISA: Instruction Set Architecture
 / JIT: Just-In-Time (compilation)
 / MMA: Matrix Multiply-Accumulate
+/ OpenCL: Open Computing Language
+/ OpenMP: Open Multi-Processing
 / PCIe: Peripheral Component Interconnect Express
 / PTX: Parallel-Thread eXecution
 / RAII: Resource Acquisition Is Initialization
 / (V)RAM: (Video) Random Access Memory
+/ RCB: Recursive Coordinate Bisection
 / RDMA: Remote Direct Memory Access
+/ RIB: Recursive Inertial Bisection
 / ROCm: Radeon Open Compute
 / SASS: Streaming ASSembler
 / SIMD: Single Instruction, Multiple Data

@@ -121,11 +121,14 @@ The `Rust-CUDA` project is composed of multiple sub-projects, some of which are 
 *`cuda-std`* is the GPU-side "standard" library for writing Rust-CUDA kernels. It provides all of the usual CUDA functions and primitives (e.g., getting a thread's index, synchronizing threads at the block level, ...) and also a wide variety of low-level intrinsics for math functions, warp-level manipulations, or address-space casting. `cuda-std` also provides macros for allocating shared memory, which we can extensively use for kernel performance optimizations.
 
 #h(-1.8em)
-*`rustc-codegen-nvvm`* is a custom backend for the Rust compiler that produces PTX code, and the most crucial component of the Rust-CUDA project for enabling Rust as a first-class CUDA programming language. It leverages NVIDIA's libNVVM to offload the code generation and most of the optimization work. The NVVM IR (Intermediate Representation) is a proprietary compiler internal representation based, at the time of writing, on LLVM 7 IR. The `rustc-codegen-nvvm` module is responsible for generating valid PTX from Rust's inner Mid-level Intermediate Representation (MIR). It first lowers MIR to LLVM 7 IR, then feeds it into libNVVM before getting the final, optimized PTX. /*@rustc-nvvm-pipeline*/ showcases the compilation process for generating PTX code using `rustc-codegen-nvvm`.
+*`rustc-codegen-nvvm`* is a custom backend for the Rust compiler that produces PTX code, and the most crucial component of the Rust-CUDA project for enabling Rust as a first-class CUDA programming language. It leverages NVIDIA's libNVVM to offload the code generation and most of the optimization work. The NVVM IR (Intermediate Representation) is a proprietary compiler internal representation based, at the time of writing, on LLVM 7 IR. The `rustc-codegen-nvvm` module is responsible for generating valid PTX from Rust's inner Mid-level Intermediate Representation (MIR). It first lowers MIR to LLVM 7 IR, then feeds it into libNVVM before getting the final, optimized PTX. @compilation_pipeline showcases the complete compilation process for generating a cubin/fatbin from a Rust-CUDA kernel using `rustc-codegen-nvvm`.
 
-> TODO: Insert figure explaining the process here.
+#figure(
+  image("../../figures/3-contributions/compilation_pipeline.svg", width: 96%),
+  caption: "Complete compilation pipeline of a Rust-CUDA kernel"
+)<compilation_pipeline>
 
-#h(-1.8em)
+#h(1.8em)
 *`ptx-compiler`* is a small tool that allows the compilation of PTX files into cubin or fatbin files. This allows us to avoid JIT compilation of PTX upon loading it as a module when using `cust`.
 
 #h(-1.8em)
@@ -152,22 +155,148 @@ We are currently working on a draft Pull Request (PR) to merge these changes int
 
 == Hardware-Accelerated Rust Profiling
 
-After establishing an exhaustive state of the art for GPU programming in Rust, we chose the most relevant code generation methods and set out to benchmark their performance. To do this, we decided to implement an open-source tool that evaluates the performance of GPU-accelerated Rust. The HARP (Hardware-Accelerate Rust Profiling) project is hosted by the #link("https://github.com/cea-hpc/HARP")[CEA-HPC] organization on GitHub.
+After establishing an exhaustive state of the art for GPU programming in Rust, we choose the most relevant code generation methods and set out to benchmark their performance. To do this, we implement an open-source tool that evaluates the performance of GPU-accelerated Rust. The HARP (Hardware-Accelerate Rust Profiling) project is hosted by the #link("https://github.com/cea-hpc/HARP")[CEA-HPC] organization on GitHub.
 
 === Implementation details
 
+HARP is a simple profiler for evaluating the performance of hardware-accelerated Rust code. It aims at gauging the capabilities of Rust as a first-class language for GPGPU programming, especially in the field of scientific computing.
+#linebreak()
+HARP can benchmark the following kernels:
+- AXPY (general vector-vector addition)
+- GEMM (general dense matrix-matrix multiplication)
+- Reduction (sum reduction)
+- Prefix Sum (sum exclusive scan)
+Please note that the Rust-CUDA implementation of the scan kernel currently does not work for unknown reasons. It appears to be caused by a memory issue (segmentation fault) but the identical CUDA C++ code works flawlessly. We suppose it is caused by a problem during the Rust-CUDA code generation step, maybe ABI-related, but we were not able to find a fix at the time of writing.
 
+#h(-1.8em)
+Each of the kernels is available in several implementations:
+- CPU (serial and parallel);
+- OpenCL;
+- CUDA, using either Rust-CUDA or CUDA C++ code.
+The CPU versions of the kernels serve as a baseline to compare the speedup offered by GPUs. The GPU implementations of the GEMM kernel are available in two flavors: a naive version and an optimized one that leverages shared memory with SIMD memory loads and stores, as well as tiling techniques to more efficiently use the underlying hardware architecture. 
+
+Profiling can be done on both single-precision and double-precision floating-point formats (see IEEE 754 norm/*cite*/). At the moment, both the reduction and scan kernels only support 32-bit signed integers. This is due to time constraints that prevented the implementation of generic versions for floating-point arithmetic, which is more intricate to set up when using advanced warp-level intrinsic.
+
+The user must specify a kernel to benchmark, as well as a set of dimensions on which to run the measurements (vector length for AXPY, reduction and scan, matrix size for GEMM). HARP then automatically performs all the benchmarking runs and generates a CSV file containing a report of the aggregated statistics for the kernel. A report includes the following information for each dimension specified in the HARP benchmark configuration:
+- The target kind (either host or device);
+- The implementation variant of the kernel;
+- The number of elements per dimension;
+- The allocates memory size in bytes;
+- The total number of FP operations.
+It also includes the following metrics about the kernel:
+- The minimum and maximum recorded execution time;
+- The median and mean (average) recorded execution time;
+- The runtime standard deviation;
+- The arithmetic intensity (in FLOP/Byte);
+- The memory bandwidth (in GiB/s);
+- The computational performance (in GFLOP/s).
+
+HARP also provides a Python script that generates graphs from the performance reports (using pandas and plotly libraries).
 
 === Benchmark methodology
 
-=== Comparison of GPU code generation methods
+In order to assert the stability and correctness of the measures, we developed a systematic approach to benchmarking the kernel implementations. @harp_algo gives a high-level overview of the algorithmic methodology used to measure the performance of Rust kernels. 
+
+#figure(caption: "Pseudo-code of the algorithm used to benchmark kernels in HARP")[
+  ```
+PROGRAM harp_benchmark
+──────────────────────────────────────────────────────────────────────────────────
+INPUTS:
+  kernel:          A kernel to benchmark
+  implementations: A list of implementations to compare
+  variants:        A list of variants for each implementation
+  datatype:        The datatype to use
+  dimensions:      A list of dimensions for generating the datasets
+  rng_seed:        A seed for a randomized dataset generation
+──────────────────────────────────────────────────────────────────────────────────
+OUTPUT:
+  A list of statistics for each dimension/implementation/variant combination
+  of the benchmarked kernel
+──────────────────────────────────────────────────────────────────────────────────
+CONSTANTS:
+  MIN_EXEC_TIME: Minimum execution time to validate a kernel execution
+  MIN_REP_COUNT: Minimum number of benchmarks to perform for a given
+                 dimension/implementation/variant combination
+──────────────────────────────────────────────────────────────────────────────────
+VARIABLES:
+  dataset:   A list of randomly generated values for each dimension
+  samples:   A list of execution times for each
+             dimension/implementation/variant combination 
+  exec_time: Execution time of a given kernel
+             dimension/implementation/variant combination
+──────────────────────────────────────────────────────────────────────────────────
+PROCEDURE:
+FOR EACH dim IN dimensions
+  dataset <- generate_dataset(datatype, dim, rng_seed)
+
+  FOR EACH impl IN implementations
+    FOR EACH var IN variants
+      FOR EACH i IN [0, MIN_REP_COUNT]
+        WHILE exec_time < MIN_EXEC_TIME
+          exec_time <- chrono(kernel(impl, var, dataset))
+        END WHILE
+        samples[dim, impl, var, i] <- exec_time
+      END FOR EACH
+    END FOR EACH
+  END FOR EACH
+END FOR EACH
+
+RETURN compute_statistics(samples)
+  ```
+]<harp_algo>
+
+For each specified dimension to use, the input dataset is randomly initialized and remains invariant for all of the benchmark runs for that specific dimension. This guarantees that we do not fall into edge cases where the compiler or the CPU/GPU microarchitecture is able to aggressively optimize some of the computations (e.g. when doing operations with 1s or 0s). It also ensures that all implementations and their respective variants are compared using a consistent dataset.
+#linebreak()
+The `MIN_REP_COUNT` constant allows us to repeat the measurements as many times as necessary in order to compute meaningful statistics about the kernel's performance. The default value is set to 31 (the same value used by the MAQAO HPC profiler/*cite*/).
+#linebreak()
+The `MIN_EXEC_TIME` constant serves a tight loop that ensures that the kernels run for a long enough period of time. This value depends on the precision of the clock used to benchmark the kernels.
 
 === Results analysis
 
+This subsection will present the results obtained both from HARP and from separate measurements designed to specifically compare GPU programming in Rust against other hardware-accelerator paradigms or libraries in the field of HPC.
+#linebreak()
+All performance results presented hereafter were done on a workstation with the following characteristics:
+- *CPU:* Intel (Alder Lake) i5-12600H, 12 cores (4 P-cores, 8 E-cores)/16 threads \@ 4.5 GHz, 32 GB DDR5 RAM, 18 MB shared L3 cache.
+- *GPU:* NVIDIA T600 (Turing), 640 CUDA cores, 4 GB GDDR6, 160 GB/s, 1.7 TFLOP/s in FP32, Driver: vXXX.XX.XX.
+- *Software stack:* NVIDIA CUDA Toolkit Version 12.2, NVIDIA HPC SDK Version 23.7, NVIDIA OpenCL SDK, GCC v13.1, rustc v1.72.0 and v1.59.0
+> TODO: Anything else?
+
+TODO: Insert graphs + discuss metrics
+
+TODO: Discuss CPU vs GPU, OpenCL vs CUDA
+
+TODO: Insert Rust-CUDA vs. CUDA C++ graphs + discuss
+
+TODO: Insert Rust-CUDA vs. cuBLAS + discuss
+
+TODO: Briefly discuss Rust-CUDA vs. Kokkos + discuss (but results + hardware under NDA)
+
 == Porting partitioning algorithms from a CEA application
+
+The final stage of the internship involves porting parts of a real-world application to the GPU using Rust. This last step aims to push the boundaries of Rust GPGPU programming capabilities and explore the limits of the compiler's help in writing thread-safe kernels. Porting is done using the Rust-CUDA project, targeting NVIDIA GPUs.
 
 === `coupe`, a concurrent mesh partitioner
 
+The application we chose to port is `coupe`/*cite*/, a modular, multi-threaded library for mesh partitioning, written in Rust. It is developed at the CEA/DAM by the joint CEA --- Paris-Saclay University LIHPC laboratory. `coupe` implements multiple algorithms aimed at achieving optimal load balancing, while also minimizing communication costs through the use of geometric methods. Hereafter, we list some of the partitioning algorithms available in the tool:
+- Space-filling curves: Z-curve, Hilbert curve
+- Recursive Coordinate Bisection (RCB) and Recursive Inertial Bisection (RIB)
+- Multi-jagged
+- Karmarkar-Karp
+- K-means
+Some of the algorithms offer optimized variants for cartesian meshes.
+
 === Recursive Coordinate Bisection (RCB)
 
+The algorithm we have chosen to port is the Recursive Coordinate Bisection (RCB)/*cite*/. It is one of the simplest geometric algorithms.
+#linebreak()
+Given an N-dimensional set of points, select a vector $n$ of the canonical basis $(e_0, ..., e_(n-1))$. Split the set of points with a hyperplane orthogonal to $n$, such that the two parts of the splits are evenly weighted. Recurse as many times as necessary by reapplying the algorithm to the two parts with another normal vector in each.
+
+> TODO: Add figure for RCB
+
+Figure X showcases the partitioning of a set of points following the RCB algorithm. We have chosen it because of its simple approach and recursive nature, which makes it ideal to use on a GPU. 
+
 === Observations
+
+In practice, trying to port the RCB algorithm was exceedingly difficult. Indeed, most of it relies on a series of basic algorithms, such as reductions or prefix sums (exclusive scan). Because Rust-CUDA does not have access to library bindings that provide those primitives GPU code blocks, this implied that we had to rewrite everything ourselves. This endeavor proved to be very time-consuming and difficult to implement in an efficient way, by hand. We encountered multiple issues with kernel code generation producing invalid PTX, which meant we had to switch to CUDA C++ implementations instead of Rust-CUDA ones. In summary, the Rust-CUDA project serves as a robust foundation for crafting "basic" GPU code using Rust. However, it is not currently equipped to handle more complex hardware-accelerated programming tasks, as it lacks many useful abstractions and/or bindings to libraries that hasten the development of optimized GPU kernels for scientific computing applications.
+#linebreak()
+We were not able to achieve a working Rust-CUDA port of the RCB algorithm at the time of writing. However, we are investigating a different approach that should simplify the GPU implementation, while also better exploiting the architecture of the hardware accelerator. This work will be our main focus for the remainder of the internship.

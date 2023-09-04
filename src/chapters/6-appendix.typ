@@ -349,4 +349,3 @@ fn main() -> ocl::Result<()> {
 #figure(
   image("../../figures/6-appendix/borrowing2.svg"),
   caption: "Read-write borrowing visualization"
-)<read_write>

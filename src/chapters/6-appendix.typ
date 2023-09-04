@@ -9,11 +9,52 @@
 
 == Glossary
 
-/ ASIC: Application-Specific Integrated Circuit.
-/ CUDA: Compute Unified Device Architecture.
-/ FPGA: Field-Programmable Gate Array.
-/ GPU: Graphics Programming Unit.
+Items in the glossary are ordered alphabetically.
 
+#set par(first-line-indent: 0em)
+#set terms(separator: ": ", tight: true, spacing: auto)
+/ ABI: Application Binary Interface
+/ AI: Artificial Intelligence
+/ API: Application Programming Interface
+/ ASIC: Application-Specific Integrated Circuit
+/ AXPY: $alpha x + y$, vector addition
+/ BLAS: Basic Linear Algebra Software
+/ CU: Compute Unit
+/ CUDA: Compute Unified Device Architecture
+/ (G)DDR: (Graphics) Double Data Rate (memory)
+/ DNN: Deep Neural Network
+/ FMA: Fused Multiply-Add
+/ FP: Floating Point
+/ FPGA: Field Programmable Gate Array
+/ FFT: Fast Fourier Transform
+/ GEMM: General Matrix Multiplication
+/ (GP)GPU: (General Purpose) Graphics Programming Unit
+/ HBM: High-Bandwidth Memory
+/ HIP: Heterogeneous-Compute Interface for Portability
+/ HPC: High Performance Computing
+/ I/O: Input/Output
+/ IR: Intermediate Representation
+/ ISA: Instruction Set Architecture
+/ JIT: Just-In-Time (compilation)
+/ MMA: Matrix Multiply-Accumulate
+/ OpenCL: Open Computing Language
+/ OpenMP: Open Multi-Processing
+/ OS: Operating System
+/ PCIe: Peripheral Component Interconnect Express
+/ PTX: Parallel-Thread eXecution
+/ RAII: Resource Acquisition Is Initialization
+/ (V)RAM: (Video) Random Access Memory
+/ RCB: Recursive Coordinate Bisection
+/ RDMA: Remote Direct Memory Access
+/ RIB: Recursive Inertial Bisection
+/ ROCm: Radeon Open Compute
+/ SASS: Streaming ASSembler
+/ SIMD: Single Instruction, Multiple Data
+/ SIMT: Single Instruction, Multiple Thread
+/ SM: Streaming Multiprocessor
+/ TF: Tensor Float
+
+#pagebreak()
 == Listings 
 
 #figure(caption: "Rust's compiler error message for a race condition bug in")[
@@ -60,7 +101,7 @@ error[E0499]: cannot borrow `result` as mutable more than once at a time
   ```
 ]<error_race_cond>
 
-#figure(caption: "Minimal OpenCL C code that builds and run an OpenCL DAXPY kernel on a GPU")[
+#figure(caption: "Minimal OpenCL C code that builds and run an OpenCL DAXPY kernel on a GPU", caption-pos: top)[
   ```c
 #include <math.h>
 #include <stdio.h>
@@ -121,6 +162,10 @@ cl_program build_program(cl_context ctx, cl_device_id dev, char const* filename)
     fread(program_buffer, sizeof(char), program_size, program_handle);
     fclose(program_handle);
 ```
+]<ocl_c>
+
+#pagebreak()
+
 ```c
     program =
         clCreateProgramWithSource(ctx, 1, (char const**)(&program_buffer), &program_size, &err);
@@ -230,9 +275,8 @@ int main() {
     return 0;
 }
   ```
-]<ocl_c>
 
-#figure(caption: "Minimal OpenCL Rust code for building and launching an OpenCL DAXPY kernel on a GPU, using the `ocl` crate")[
+#figure(caption: "Minimal OpenCL Rust code for building and launching an OpenCL DAXPY kernel on a GPU, using the `ocl` crate", caption-pos: top)[
   ```rs
 extern crate ocl;
 use ocl::ProQue;
@@ -268,3 +312,41 @@ fn main() -> ocl::Result<()> {
 }
   ```
 ]<ocl_rs>
+
+#pagebreak()
+== Figures <anx_figs>
+
+#figure(
+  image("../../figures/6-appendix/saxpy.png"),
+  caption: "Complete HARP output for the SAXPY kernel benchmark"
+)
+#v(5em)
+#figure(
+  image("../../figures/6-appendix/daxpy.png"),
+  caption: "Complete HARP output for the DAXPY kernel benchmark"
+)
+
+#figure(
+  image("../../figures/6-appendix/sgemm.png"),
+  caption: "Complete HARP output for the SGEMM kernel benchmark"
+)
+#v(5em)
+#figure(
+  image("../../figures/6-appendix/dgemm.png"),
+  caption: "Complete HARP output for the DGEMM kernel benchmark"
+)
+
+#figure(
+  image("../../figures/6-appendix/reduce.png"),
+  caption: "Complete HARP output for the reduction kernel benchmark"
+)
+
+#figure(
+  image("../../figures/6-appendix/borrowing1.svg", ),
+  caption: "Read-only borrowing visualization"
+)<read_only>
+
+#figure(
+  image("../../figures/6-appendix/borrowing2.svg"),
+  caption: "Read-write borrowing visualization"
+)<read_write>

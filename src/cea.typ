@@ -2,7 +2,6 @@
 
 == The CEA
 
-#h(1.8em)
 As a significant actor in research, development and innovation, the French Atomic Energy and Alternative Energies Commission (CEA) operates in four fields:
 - defense and security;
 - low-carbon energies (nuclear and renewable);

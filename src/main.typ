@@ -1,3 +1,4 @@
+// Entry file
 #set page(paper: "a4")
 #set par(leading: 0.55em, first-line-indent: 1.8em, justify: true)
 #set list(indent: 0.8em)

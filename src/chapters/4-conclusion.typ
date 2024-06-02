@@ -1,6 +1,5 @@
 = Conclusion
 
-#h(1.8em)
 This internship aimed to explore Rust's viability for GPGPU programming in scientific computing use cases. On the one hand, HPC is shifting towards an ever-growing reliance on hardware accelerators, especially GPUs, and it is crucial to write robust code that efficiently exploits these new heterogeneous architectures. On the other hand, the Rust programming language focuses on performance, safety and concurrency, three aspects that align well with HPC's needs. Rust's type, memory, and thread safety features make it a particularly appealing language for this task.
 
 Without any prior comprehensive work on Rust's potential for GPU programming, we set out to establish an exhaustive state of the art for the available options in this domain. We investigated various possibilities, first starting with the language's native support. Then, we explored compute shaders libraries that brought hardware accelerator programming capabilities to Rust. We concluded that the most relevant strategies for developing GPGPU kernels involved using bindings to the OpenCL API and the Rust-CUDA project, designed to bring first-class support for NVIDIA's CUDA framework within the Rust ecosystem.

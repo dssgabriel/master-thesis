@@ -1,5 +1,5 @@
 #show raw.where(block: true): it => {
-    set text(font: "IBM Plex Mono", size: 8pt)
+    set text(font: "Intel One Mono", size: 8pt)
     set align(left)
     set block(fill: luma(240), inset: 10pt, radius: 4pt, width: 100%)
     it
@@ -10,7 +10,7 @@
   outset: (y: 3pt),
   radius: 2pt
 )
-#show raw.where(block: false): text.with(font: "IBM Plex Mono")
+#show raw.where(block: false): text.with(font: "Intel One Mono")
 
 = Context of the internship
 
@@ -87,7 +87,7 @@ We start by introducing common concepts for GPU programming. We define the terms
 
 #figure(
   image("../../figures/2-context/compute_model.svg", width: 100%),
-  caption: [General compute model for CUDA-style GPU programming]
+  caption: [General compute model for CUDA-like GPU programming]
 ) <compute_model>
 
 ==== Low-level <low_lvl_gpu_prog>

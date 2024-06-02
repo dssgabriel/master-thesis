@@ -51,7 +51,5 @@ To meet these new requirements, software engineering and programming languages a
 In this context, the CEA uses Rust to develop several applications and tools, some of which could benefit from the accelerations offered by GPUs. This internship aims to explore the capabilities of the Rust language for programming hardware accelerators. This work consists of a detailed overview of the current state of the art, performance analysis depending on the chosen code generation method, and a proof of concept by porting partitioning algorithms from CEA's #link("https://github.com/LIHPC-Computational-Geometry/coupe")[`coupe`] library on NVIDIA GPUs.
 ]
 
-#v(2.2em)
-
-#align(center, text(18pt)[CEA, DAM, DIF, F-91297, Arpajon, France])
-#align(center, text(16pt)[#datetime.today().display("[month repr:long] [day], [year]")])
+#align(center, text(16pt)[CEA, DAM, DIF, F-91297, Arpajon, France])
+#align(center, text(14pt)[August 31, 2023])

@@ -24,7 +24,7 @@ watch: open
 
 # Open the PDF in a document viewer
 open: build
-	@okular {{OUTPUT_PDF}} &
+	@evince {{OUTPUT_PDF}} &
 
 # Clean the artifacts from the directory
 clean:

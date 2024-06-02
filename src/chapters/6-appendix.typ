@@ -1,5 +1,5 @@
 #show raw.where(block: true): it => {
-    set text(font: "IBM Plex Mono")
+    set text(font: "Intel One Mono")
     set align(left)
     set block(fill: luma(240), inset: 10pt, radius: 4pt, width: 100%)
     it
@@ -101,7 +101,7 @@ error[E0499]: cannot borrow `result` as mutable more than once at a time
   ```
 ]<error_race_cond>
 
-#figure(caption: "Minimal OpenCL C code that builds and run an OpenCL DAXPY kernel on a GPU", caption-pos: top)[
+#figure(caption: figure.caption(position: top, [Minimal OpenCL C code that builds and run an OpenCL DAXPY kernel on a GPU]))[
   ```c
 #include <math.h>
 #include <stdio.h>
@@ -276,7 +276,7 @@ int main() {
 }
   ```
 
-#figure(caption: "Minimal OpenCL Rust code for building and launching an OpenCL DAXPY kernel on a GPU, using the `ocl` crate", caption-pos: top)[
+#figure(caption: figure.caption(position: top, [Minimal OpenCL Rust code for building and launching an OpenCL DAXPY kernel on a GPU, using the `ocl` crate]))[
   ```rs
 extern crate ocl;
 use ocl::ProQue;

@@ -1,5 +1,5 @@
 #show raw.where(block: true): it => {
-    set text(font: "IBM Plex Mono", size: 8pt)
+    set text(font: "Intel One Mono", size: 8pt)
     set align(left)
     set block(fill: luma(240), inset: 10pt, radius: 4pt, width: 100%)
     it
@@ -10,7 +10,7 @@
   outset: (y: 3pt),
   radius: 2pt
 )
-#show raw.where(block: false): text.with(font: "IBM Plex Mono")
+#show raw.where(block: false): text.with(font: "Intel One Mono")
 
 = Contributions
 
@@ -52,7 +52,6 @@ pub unsafe extern "ptx-kernel" fn daxpy_kernel(
         *item += alpha * &*x.add(idx);
     }
 }
-
 // Necessary code to tell the compiler what to do in case of a fatal error
 #[panic_handler]
 unsafe fn breakpoint_panic_handler(_: &::core::panic::PanicInfo) -> ! {
